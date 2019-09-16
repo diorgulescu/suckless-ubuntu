@@ -77,11 +77,19 @@ apt-get install -y libgsettings-qt1
 apt-get install -y libproxy1-plugin-gsettings
 apt-get install -y libappindicator3-1
 apt-get install -y gir1.2-appindicator3-0.1 gdebi
+apt-get install -y feh
+apt-get install -y abiword gnumeric
 
 ###### Get and install playerctl
 wget 'https://github.com/acrisci/playerctl/releases/download/v0.5.0/playerctl-0.5.0_amd64.deb'
 dpkg -i playerctl-0.5.0_amd64.deb
 rm -rf playerctl-0.5.0_amd64.deb
+
+###### Set appropriate user permissions
+chown $(whoami):$(whoami) -R /home/$(whoami)/
+chmod g+s /home/$(whoami)/
+setfacl -d -m g::rwx /home/$(whoami)/
+setfacl -d -m o::rx /home/$(whoami)/
 
 ###### Make config directories
 mkdir ~/.config
@@ -90,13 +98,15 @@ mkdir ~/.config/i3
 
 ###### Apply GTK theme, fonts, icon theme, login greeter
 ###### and i3
-cp -f ~/i3buntu-master/configs/gtk/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini
-cp -f ~/i3buntu-master/configs/gtk/.gtkrc-2.0 ~/.gtkrc-2.0
-cp -f ~/i3buntu-master/configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
-cp -f ~/i3buntu-master/configs/i3/config ~/.config/i3/config
+cp -f Ubuntu-Focused/configs/gtk/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini
+#cp -f Ubuntu-Focused/configs/gtk/.gtkrc-2.0 ~/.gtkrc-2.0
+cp -f Ubuntu-Focused/configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
+cp -f Ubuntu-Focused/configs/i3/config ~/.config/i3/config
 
-###### Set appropriate user permissions
-chown $(whoami):$(whoami) -R /home/$(whoami)/
-chmod g+s /home/$(whoami)/
-setfacl -d -m g::rwx /home/$(whoami)/
-setfacl -d -m o::rx /home/$(whoami)/
+##### Install the Min browser
+wget https://github.com/minbrowser/min/releases/download/v1.11.0/min_1.11.0_amd64.deb
+sudo dpkg -i min_1.11.0_amd64.deb
+rm dpkg -i min_1.11.0_amd64.deb
+
+###### Set wallpaper
+echo "feh --bg-fill ~/.wallpaper.jpg" >> ~/.profile

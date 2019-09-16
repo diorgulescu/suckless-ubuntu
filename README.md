@@ -1,5 +1,5 @@
-Focused Linux
-=============
+Ubuntu Focused
+==============
 
 This project is for setting up a minimal Ubuntu installation built around the i3 window manager, together with other options that will make the operating system functional. The main goal of the project is to achieve an Ubuntu-derived Linux distribution that has the concepts of deep work & focused attention at its core. The project was initially forked from Michael Staal-Olsens' i3buntu repository.
 
@@ -14,6 +14,16 @@ A minimal operating system aims at providing:
 * An internet connection.
 * A computer which supports the network drivers that come with the Ubuntu Minimal image.
 
+# Known issues
+## Min browser fails to install correctly
+It may happen that some of the dependencies are improperly setup using the latest Ubuntu mirrors. In case some error pops up during the Min setup stage, just run *sudo apt-get install -f* and it should be automatically fixed.
+
+## No 'settings.json' for Min
+This seems more like an edge case, but it was reported. If the browser fails to start, just make sure the appropriate permissions are set for the .config folders. To make sure, one may also create the file:
+*chown $(whoami):$(whoami) -R .config/
+touch ~/.config/Min/settings.json*
+
+However, this should not happen since the install script does this beforehand. TODO: investigate if this behaviour keeps reappearing.
 
 # Installation
 
@@ -29,9 +39,9 @@ Once the installation finishes, reboot into your new system (console only, for n
 
 ##### 2. Download and prepare the i3buntu installation files
 
-Once logged in, download the Focused Linux "install files"
+Once logged in, download the Ubuntu Focused "install files"
 ```
-wget https://github.com/diorgulescu/Focused-Linux/archive/master.tar.gz
+wget https://github.com/diorgulescu/Ubuntu-Focused/archive/master.tar.gz
 ```
 and hit `ENTER`. This will download the most recent version of Focused Linux from this GitHub account. Now type the following:
 ```
@@ -43,7 +53,7 @@ and hit `ENTER`. This will extract the installation package.
 
 Now type the following in the terminal:
 ```
-cd Focused-Linux-master
+cd Ubuntu-Focused-master
 sudo chmod +x install.sh
 sudo ./install.sh
 ```
