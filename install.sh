@@ -2,8 +2,6 @@
 
 ### PACKAGE LISTS ###
 base_pkgs = (
-	"ubuntu-drivers-common"
-	"ttf-ubuntu-font-family"
 	"openssh-client"
 	"lightdm"
 	"x11-xserver-utils"
@@ -74,6 +72,22 @@ tools_pkgs = (
 cp wallpaper.jpg ~/.wallpaper.jpg
 
 apt-get update # To get the latest package lists
+
+### Installing basic packages
+for file in ${base_pkgs[@]}
+do
+	apt-get install -y $file
+done
+
+for file in ${lib_pkgs[@]}
+do
+	apt-get install -y $file
+done
+
+for file in ${tools_pkgs[@]}
+do
+	apt-get install -y $file
+done
 
 ###### Set appropriate user permissions
 chown $(whoami):$(whoami) -R /home/$(whoami)/
