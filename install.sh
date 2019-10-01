@@ -1,44 +1,39 @@
-#!/bin/sh
+#!/bin/bash
 
 ### PACKAGE LISTS ###
-base_pkgs = (
-	"openssh-client"
-	"lightdm"
-	"x11-xserver-utils"
-	"python-gconf"
-	"vim"
-	"vim-common"
-	"network-manager"
-	"network-manager-openvpn"
-	"wireless-tools"
-	"lightdm-gtk-greeter"
-	"lightdm-gtk-greeter-settings"
-	"libbluetooth3"
-	"pulseaudio-module-bluetooth"
-	"pulseaudio-module-x11"
-	"xserver-xorg-video-intel"
-	"acpi-support"
-	"cups"
-	"cups-bsd"
-	"cups-client"
-	"cups-filters"
-	"openprinting-ppds"
-	"xfonts-base"
-	"xfonts-encodings"
-	"xfonts-scalable"
-	"xfonts-utils"
-	"fontconfig"
-	"fontconfig-config"
-	"dmz-cursor-theme"
-	"xcursor-themes"
+base_pkgs=(
+	"openssh-client" 
+	"x11-xserver-utils" 
+	"python-gconf" 
+	"vim" 
+	"vim-common" 
+	"network-manager" 
+	"network-manager-openvpn" 
+	"wireless-tools" 
+	"libbluetooth3" 
+	"pulseaudio-module-bluetooth" 
+	"pulseaudio-module-x11" 
+	"xserver-xorg-video-intel" 
+	"acpi-support" 
+	"cups" 
+	"cups-client" 
+	"cups-filters" 
+	"openprinting-ppds" 
+	"xfonts-base" 
+	"xfonts-encodings" 
+	"xfonts-scalable" 
+	"xfonts-utils" 
+	"fontconfig" 
+	"fontconfig-config" 
+	"dmz-cursor-theme" 
+	"xcursor-themes" 
 	"laptop-detect"
-
+        "xinit"	
 )
 
-lib_pkgs = (
+lib_pkgs=(
 	"libssh-4"
 	"libnm-glib-vpn1"
-	"libxfont1"
 	"libfont-afm-perl"
 	"libfontconfig1"
 	"libfontembed1"
@@ -56,76 +51,119 @@ lib_pkgs = (
 	"libgcr-3-dev"
 )
 
-tools_pkgs = (
-	"pactl xbacklight redshift git"
-	"feh"
+tools_pkgs=(
+	"xbacklight redshift git"
+	"feh setfacl"
 	"abiword gnumeric"
 	"lynx xterm python3-pip python-pip"
 )
 
-#------------------------------------------------------------------#
-#                          INSTALL Focused                     #
-#------------------------------------------------------------------#
-
-
-###### Place the default wallpaper in $HOME directory
-cp wallpaper.jpg ~/.wallpaper.jpg
-
-apt-get update # To get the latest package lists
-
-### Installing basic packages
-for file in ${base_pkgs[@]}
+while getopts u:xlogin: option
 do
-	apt-get install -y $file
+	case "${option}"
+		in
+		u) USER=${OPTARG};;
+		xlogin) XLOGIN=${OPTARG};;
+	esac
 done
 
-for file in ${lib_pkgs[@]}
-do
-	apt-get install -y $file
-done
+function configure_system() {
+	###### Place the default wallpaper in $HOME directory
+	echo "Copying the default wallpaper..."
+	cp wallpaper.jpg /home/$USER/.wallpaper.jpg
 
-for file in ${tools_pkgs[@]}
-do
-	apt-get install -y $file
-done
+	echo "Updating the available packages list..."
+	apt-get update # To get the latest package lists
 
-###### Set appropriate user permissions
-chown $(whoami):$(whoami) -R /home/$(whoami)/
-chmod g+s /home/$(whoami)/
-setfacl -d -m g::rwx /home/$(whoami)/
-setfacl -d -m o::rx /home/$(whoami)/
+	echo "==> Installing base packages..."
+	install_packages($base_pkgs)
 
-###### Make config directories
-mkdir ~/.config
-mkdir ~/.config/gtk-3.0
+	echo "==> Installing libraries..."
+	install_packages($libs_pkgs)
 
-###### Create the folder in which sources from suckless.org will be saved
-mkdir ~/suckless-sources
+	echo "==> Installing additional tools..."
+	install_packages($tools_pkgs)
+	
+	echo "==> Setting up suckless.org tools..."
+	suckless_tools_setup()
 
-###### Fetch the latest sources
-cd ~/suckless-sources
-git clone git://git.suckless.org/dmenu
-git clone git://git.suckless.org/st
-git clone git://git.suckless.org/surf
-git clone git://git.suckless.org/dwm
+	if [ $XLOGIN == 'yes' ]
+	then
+		###### Make config directories
+  		mkdir /home/$USER/.config
+		mkdir /home/$USER/.config/gtk-3.0
+		setup_gui_login()
+	fi
 
-##### COMPILE SUCKLESS.ORG SOFTWARE #####
-for FOLDER in $(ls -d ~/suckless-sources/*/)
-do
-	cd $FOLDER; make clean install
-done
+	echo "==> Trying to set user permissions"
+	chown $USER:$USER -R /home/$USER/
+	chmod g+s /home/$USER/
+	setfacl -d -m g::rwx /home/$USER/
+	setfacl -d -m o::rx /home/$USER/
+}
 
-###### Apply GTK theme, fonts, icon theme, login greeter
-###### and i3
-cp -f Ubuntu-Focused/configs/gtk/gtk-3.0/settings.ini ~/.config/gtk-3.0/settings.ini
-cp -f Ubuntu-Focused/configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
+function setup_gui_login() {
+	apt-get install -y "lightdm lightdm-gtk-greeter lightdm-gtkgreeter-settings"
+	
+	###### Apply GTK theme, fonts, icon theme, login greeter
+	cp -f configs/gtk/gtk-3.0/settings.ini /home/$USER/.config/gtk-3.0/settings.ini
+	cp -f configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
 
-##### Install the Min browser
-wget https://github.com/minbrowser/min/releases/download/v1.11.0/min_1.11.0_amd64.deb
-sudo dpkg -i min_1.11.0_amd64.deb
-rm -rf min_1.11.0_amd64.deb
+	echo "#!/bin/sh
+	# You can add other programs to set the background, add autoloading
+	# and add autoload for USB and such here 
+	# Make sure you start dwm last as it never returns control to this script
+	feh --bg-fill .wallpaper.jpg
+        slstatus &
+	st&
+	exec /usr/local/bin/dwm > /dev/null" >> /usr/local/bin/dwm-start
 
+	echo "[Desktop Entry]
+	Encoding=UTF-8
+	Name=dwm
+	Comment=This session starts dwm
+    	Exec=/usr/local/bin/dwm-start
+        Type=Application" >> /usr/share/xsessions/dwm.desktop
 
+}
 
-###### Set wallpaper
-echo "feh --bg-fill ~/.wallpaper.jpg" >> ~/.profile
+function install_packages() {
+	for pkg in ${$1[@]}
+	do
+		apt-get install -y $pkg
+	done
+}
+
+function suckless_tools_setup() {
+	###### Create the folder in which sources from suckless.org will be saved
+	mkdir /home/$USER/suckless-sources
+
+	###### Fetch the latest sources
+	cd /home/$USER/suckless-sources
+	git clone git://git.suckless.org/dmenu
+	git clone git://git.suckless.org/st
+	git clone git://git.suckless.org/surf
+	git clone git://git.suckless.org/dwm
+	git clone git://git.suckless.org/slstatus
+	git clone git://git.suckless.org/tabbed
+	git clone git://git.suckless.org/farbfeld
+	git clone git://git.suckless.org/slock
+	git clone git://git.suckless.org/sent
+
+	# Copy dwm & slstatus configs
+	cp -f configs/dwm-config.h suckless-sources/dwm/config.h
+	cp -f configs/slstatus-config.h suckless-sources/slstatus/config.h
+
+	##### COMPILE SUCKLESS.ORG SOFTWARE #####
+	for FOLDER in $(ls -d /home/$USER/suckless-sources/*/)
+	do
+		cd $FOLDER; make clean install
+	done
+
+	# Update .xinitrc
+	echo "feh --bg-fill .wallpaper.jpg
+	slstatus &
+	st&
+	
+	exec dwm" >> /home/$USER/.xinitrc
+
