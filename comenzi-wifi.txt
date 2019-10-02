@@ -1,0 +1,2 @@
+nmcli device wifi connect -a Flacarica
+nmcli radio wifi on

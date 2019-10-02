@@ -49,26 +49,22 @@ lib_pkgs=(
 	"libgtk-3-dev"
 	"libwebkit2gtk-4.0-dev"
 	"libgcr-3-dev"
+	"libjpeg-dev"
 )
 
 tools_pkgs=(
 	"xbacklight redshift git"
 	"feh setfacl"
 	"abiword gnumeric"
-	#"lynx xterm python3-pip python-pip"
 )
 
-while getopts u:xlogin: option
-do
-	case "${option}"
-		in
-		u) USER=${OPTARG};;
-		xlogin) XLOGIN=${OPTARG};;
-	esac
-done
+function display_help() {
+	echo "TODO"
+}
 
 function configure_system() {
 	###### Place the default wallpaper in $HOME directory
+	echo "-------======== [ SUCKLESS UBUNTU SETUP SCRIPT ] ========-------"
 	echo "Copying the default wallpaper..."
 	cp wallpaper.jpg /home/$USER/.wallpaper.jpg
 
@@ -76,31 +72,23 @@ function configure_system() {
 	apt-get update # To get the latest package lists
 
 	echo "==> Installing base packages..."
-	install_packages($base_pkgs)
+	install_packages "${base_pkgs[@]}"
 
 	echo "==> Installing libraries..."
-	install_packages($libs_pkgs)
+	install_packages "${lib_pkgs[@]}"
 
 	echo "==> Installing additional tools..."
-	install_packages($tools_pkgs)
-	
-	echo "==> Installing musl-libc"
-	cd /home/$USER
-	git clone git://git.musl-libc.org/musl
-	cd musl/
-	./configure
-	make
-	sudo make install
+	install_packages "${tools_pkgs[@]}"
 	
 	echo "==> Setting up suckless.org tools..."
-	suckless_tools_setup()
+	suckless_tools_setup
 
-	if [ $XLOGIN == 'yes' ]
+	if [ "$XLOGIN" = "yes" ]
 	then
 		###### Make config directories
   		mkdir /home/$USER/.config
 		mkdir /home/$USER/.config/gtk-3.0
-		setup_gui_login()
+		setup_gui_login
 	fi
 
 	echo "==> Trying to set user permissions"
@@ -118,9 +106,6 @@ function setup_gui_login() {
 	cp -f configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
 
 	echo "#!/bin/sh
-	# You can add other programs to set the background, add autoloading
-	# and add autoload for USB and such here 
-	# Make sure you start dwm last as it never returns control to this script
 	feh --bg-fill .wallpaper.jpg
         slstatus &
 	st&
@@ -137,8 +122,9 @@ function setup_gui_login() {
 
 function install_packages() {
         array=("$@")
-	for pkg in $array
+	for pkg in "${array[@]}"
 	do
+		echo "==> [SETUP][INFO] Installing $pkg..."
 		apt-get install -y $pkg
 	done
 }
@@ -159,9 +145,15 @@ function suckless_tools_setup() {
 	git clone git://git.suckless.org/slock
 	git clone git://git.suckless.org/sent
 
+	# Go back to the setup script folder
+	cd -
+
 	# Copy dwm & slstatus configs
-	cp -f configs/dwm-config.h suckless-sources/dwm/config.h
-	cp -f configs/slstatus-config.h suckless-sources/slstatus/config.h
+	cp -f configs/dwm-config.h /home/$USER/suckless-sources/dwm/config.h
+	cp -f configs/slstatus-config.h /home/$USER/suckless-sources/slstatus/config.h
+
+	# Now, back to the suckless-sources folder...
+	cd -
 
 	##### COMPILE SUCKLESS.ORG SOFTWARE #####
 	for FOLDER in $(ls -d /home/$USER/suckless-sources/*/)
@@ -173,6 +165,18 @@ function suckless_tools_setup() {
 	echo "feh --bg-fill .wallpaper.jpg
 	slstatus &
 	st&
-	
 	exec dwm" >> /home/$USER/.xinitrc
+}
 
+while getopts u:xlogin:h option
+do
+	case "${option}"
+		in
+		u) USER=${OPTARG};;
+		xlogin) XLOGIN=${OPTARG};;
+		h) display_help
+	esac
+done
+
+
+configure_system
