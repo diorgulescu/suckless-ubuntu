@@ -1,13 +1,14 @@
-Ubuntu Focused
-==============
+Suckless Ubuntu
+===============
 
-This project is for setting up a minimal Ubuntu installation built around the i3 window manager, together with other options that will make the operating system functional. The main goal of the project is to achieve an Ubuntu-derived Linux distribution that has the concepts of deep work & focused attention at its core. The project was initially forked from Michael Staal-Olsens' i3buntu repository.
+This project aims at setting up a minimal Ubuntu installation built around tools provided by suckless.org, together with other options that will make the operating system functional. The main goal of the project is to achieve an Ubuntu-derived Linux distribution that has the concepts of deep work & focused attention at its core. The project was initially forked from Michael Staal-Olsens' i3buntu repository, but eventually became something different as I switched from using i3 to dwm.
 
-A minimal operating system aims at providing:
-* a selection of useful software, avoiding apps that may not be relevant for most users (in the end, additional packages can be installed acording to the user's wishes)
-* support for Bluetooth devices, WiFi and power management, graphics and network drivers, printers and media keys
-* the i3 window manager as the default and only (preinstalled) window manager on the system. A number of customizations should be made in order for it to be both visually attractive and allow for productive workflows.
-* the Min browser as the default graphical tools for surfing the Internet
+Current goals:
+* provide a selection of useful software, avoiding apps that may not be relevant for most users (in the end, additional packages can be installed acording to the user's wishes)
+* support for Bluetooth devices, WiFi and power management, graphics and network drivers, including printers
+* the dwm window manager as the default and only (preinstalled) window manager on the system. A number of customizations should be made in order for it to be both visually attractive and allow for productive workflows.
+* use sbase and ubase from suckless.org
+
 
 # Requirements
 * A version of Ubuntu Minimal (Ubuntu NetBoot). The latest version is to be located here: https://help.ubuntu.com/community/Installation/MinimalCD.
