@@ -55,7 +55,7 @@ tools_pkgs=(
 	"xbacklight redshift git"
 	"feh setfacl"
 	"abiword gnumeric"
-	"lynx xterm python3-pip python-pip"
+	#"lynx xterm python3-pip python-pip"
 )
 
 while getopts u:xlogin: option
@@ -83,6 +83,14 @@ function configure_system() {
 
 	echo "==> Installing additional tools..."
 	install_packages($tools_pkgs)
+	
+	echo "==> Installing musl-libc"
+	cd /home/$USER
+	git clone git://git.musl-libc.org/musl
+	cd musl/
+	./configure
+	make
+	sudo make install
 	
 	echo "==> Setting up suckless.org tools..."
 	suckless_tools_setup()
@@ -128,7 +136,8 @@ function setup_gui_login() {
 }
 
 function install_packages() {
-	for pkg in ${$1[@]}
+        array=("$@")
+	for pkg in $array
 	do
 		apt-get install -y $pkg
 	done
