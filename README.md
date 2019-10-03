@@ -33,9 +33,9 @@ Simply use the Ubuntu Minimal CD image to create a bootable device (a USB flash 
 
 Once the installation finishes, reboot into your new system (console only, for now)
 
-##### 2. Download and prepare the i3buntu installation files
+##### 2. Download and prepare the Suckless Ubuntu installation files
 
-Once logged in, download the Ubuntu Focused "install files"
+Once logged in, download the "install files"
 ```
 wget https://github.com/diorgulescu/suckless-ubuntu/archive/master.tar.gz
 ```
