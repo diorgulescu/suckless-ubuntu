@@ -50,16 +50,39 @@ lib_pkgs=(
 	"libwebkit2gtk-4.0-dev"
 	"libgcr-3-dev"
 	"libjpeg-dev"
+	"libncurses-dev"
+	"libncursesw5-dev libzip-dev libzip4"
 )
 
 tools_pkgs=(
 	"xbacklight redshift git"
 	"feh setfacl"
-	"abiword gnumeric"
+	"lftp curl"
 )
 
+function install_scim() {
+	git clone https://github.com/jmcnamara/libxlsxwriter.git
+	cd libxlsxwriter/
+	make
+	make install
+	ldconfig
+	cd ..
+
+	git clone https://github.com/andmarti1424/sc-im.git
+	cd sc-im/src
+	make
+	make install
+
+}
 function display_help() {
 	echo "TODO"
+}
+
+function install_min() {
+	wget https://github.com/minbrowser/min/releases/download/v1.11.1/min_1.11.1_amd64.deb
+	dpkg -i min_1.11.1_amd64.deb
+	apt-get install -f
+	rm min_1.11.1_amd64.deb
 }
 
 function configure_system() {
@@ -136,7 +159,10 @@ function suckless_tools_setup() {
 	###### Fetch the latest sources
 	cd /home/$USER/suckless-sources
 	git clone git://git.suckless.org/dmenu
-	git clone git://git.suckless.org/st
+	
+	# Using Luke Smith's ST build, since he added nice handy customizations
+	git clone https://github.com/LukeSmithxyz/st.git
+
 	git clone git://git.suckless.org/surf
 	git clone git://git.suckless.org/dwm
 	git clone git://git.suckless.org/slstatus
