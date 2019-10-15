@@ -139,6 +139,12 @@ function configure_system() {
 	chmod g+s /home/$USER/
 	setfacl -d -m g::rwx /home/$USER/
 	setfacl -d -m o::rx /home/$USER/
+
+	# Clean things up
+	cleanup
+
+	# Done
+	dialog --title "ALL DONE!" --msgbox "Your new Suckless Ubuntu 18.04 has been prepared, based on the options you've selected.\\n\\n Just reboot and enjoy!" 10 60
 }
 
 function setup_gui_login() {
@@ -219,6 +225,11 @@ function suckless_tools_setup() {
 	slstatus &
 	st&
 	exec dwm" >> /home/$USER/.xinitrc
+}
+
+function cleanup() {
+	rm -rf $SU_SCRIPT_ROOT/sc-im
+	rm -rf $SU_SCRIPT_ROOT/libxlsxwriter
 }
 
 dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubuntu setup script.\\nIt will guide you through the setup process in order to gather relevant data. It won't take long ;)" 10 60
