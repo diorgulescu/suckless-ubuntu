@@ -129,7 +129,7 @@ function setup_gui_login() {
 	cp -f configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
 
 	echo "#!/bin/sh
-	feh --bg-fill .wallpaper.jpg
+	feh --bg-fill /home/$USER/.wallpaper.jpg
         slstatus &
 	st&
 	exec /usr/local/bin/dwm > /dev/null" >> /usr/local/bin/dwm-start
