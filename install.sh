@@ -16,9 +16,6 @@ base_pkgs=(
 	"xserver-xorg-video-intel" 
 	"acpi-support" 
 	"cups" 
-	"cups-client" 
-	"cups-filters" 
-	"openprinting-ppds" 
 	"xfonts-base" 
 	"xfonts-encodings" 
 	"xfonts-scalable" 
@@ -55,12 +52,12 @@ lib_pkgs=(
 )
 
 tools_pkgs=(
-	"xbacklight redshift git"
+	"git"
 	"feh setfacl"
-	"lftp curl"
 )
 
 function install_scim() {
+	echo "==> Installing sc-im.."
 	git clone https://github.com/jmcnamara/libxlsxwriter.git
 	cd libxlsxwriter/
 	make
@@ -72,19 +69,41 @@ function install_scim() {
 	cd sc-im/src
 	make
 	make install
+	cd ..
 
 }
+
 function display_help() {
 	echo "TODO"
 }
 
 function install_min() {
+	echo "==> Installing the Min browser..."
 	wget https://github.com/minbrowser/min/releases/download/v1.11.1/min_1.11.1_amd64.deb
 	dpkg -i min_1.11.1_amd64.deb
-	apt-get install -f
+	apt-get install -f -y
 	rm min_1.11.1_amd64.deb
 }
 
+function install_additional_tools() {
+	array=("$@")
+
+	IFS=' '
+	read -ra TMPTOOLSET <<< $array
+	for tool in "${TMPTOOLSET[@]}"
+	do
+		if [ "$tool" = "min" ]
+		then
+			install_min
+		elif [ "$tool" = "scim" ]
+		then
+			install_scim
+		else
+			apt-get install -y $tool
+		fi
+	done
+
+}
 function configure_system() {
 	###### Place the default wallpaper in $HOME directory
 	echo "-------======== [ SUCKLESS UBUNTU SETUP SCRIPT ] ========-------"
@@ -102,11 +121,12 @@ function configure_system() {
 
 	echo "==> Installing additional tools..."
 	install_packages "${tools_pkgs[@]}"
+	install_additional_tools "${TOOLS[@]}"
 	
 	echo "==> Setting up suckless.org tools..."
-	suckless_tools_setup
+	suckless_tools_setup "${SUCKLESS_TOOLS[@]}"
 
-	if [ "$XLOGIN" = "yes" ]
+	if [ "$XLOGIN" = "0" ]
 	then
 		###### Make config directories
   		mkdir /home/$USER/.config
@@ -122,8 +142,11 @@ function configure_system() {
 }
 
 function setup_gui_login() {
-	apt-get install -y "lightdm lightdm-gtk-greeter lightdm-gtkgreeter-settings"
+	apt-get install -y lightdm
+        apt-get install -y lightdm-gtk-greeter 
+	apt-get install -y lightdm-gtk-greeter-settings
 	
+	cd $SU_SCRIPT_ROOT
 	###### Apply GTK theme, fonts, icon theme, login greeter
 	cp -f configs/gtk/gtk-3.0/settings.ini /home/$USER/.config/gtk-3.0/settings.ini
 	cp -f configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
@@ -139,7 +162,7 @@ function setup_gui_login() {
 	Name=dwm
 	Comment=This session starts dwm
     	Exec=/usr/local/bin/dwm-start
-        Type=Application" >> /usr/share/xsessions/dwm.desktop
+        Type=Application" >> /usr/share/xgreeters/dwm-greeter.desktop
 
 }
 
@@ -147,44 +170,48 @@ function install_packages() {
         array=("$@")
 	for pkg in "${array[@]}"
 	do
-		echo "==> [SETUP][INFO] Installing $pkg..."
+		echo "===>>>Now installing $pkg and its dependencies. Please wait..." 
 		apt-get install -y $pkg
 	done
 }
 
 function suckless_tools_setup() {
+	tool_array=("$@")
+	dialog --infobox "Will now fetch & build suckless.org tools..." 3 80; sleep 4
+
 	###### Create the folder in which sources from suckless.org will be saved
 	mkdir /home/$USER/suckless-sources
 
 	###### Fetch the latest sources
 	cd /home/$USER/suckless-sources
-	git clone git://git.suckless.org/dmenu
-	
+	IFS=' '
+	read -ra TMPTOOLSET <<< $tool_array
+	for tool in "${TMPTOOLSET[@]}"
+	do
+		echo "[--------------------------------- $tool ]"
+		git clone git://git.suckless.org/$tool
+	done
 	# Using Luke Smith's ST build, since he added nice handy customizations
-	git clone https://github.com/LukeSmithxyz/st.git
-
-	git clone git://git.suckless.org/surf
-	git clone git://git.suckless.org/dwm
-	git clone git://git.suckless.org/slstatus
-	git clone git://git.suckless.org/tabbed
-	git clone git://git.suckless.org/farbfeld
-	git clone git://git.suckless.org/slock
-	git clone git://git.suckless.org/sent
+	#git clone https://github.com/LukeSmithxyz/st.git
 
 	# Go back to the setup script folder
-	cd -
+	cd $SU_SCRIPT_ROOT
 
 	# Copy dwm & slstatus configs
 	cp -f configs/dwm-config.h /home/$USER/suckless-sources/dwm/config.h
 	cp -f configs/slstatus-config.h /home/$USER/suckless-sources/slstatus/config.h
 
 	# Now, back to the suckless-sources folder...
-	cd -
+	#cd -
 
 	##### COMPILE SUCKLESS.ORG SOFTWARE #####
-	for FOLDER in $(ls -d /home/$USER/suckless-sources/*/)
+	#for FOLDER in $(ls -d /home/$USER/suckless-sources/*/)
+	for tool in "${TMPTOOLSET[@]}"
 	do
-		cd $FOLDER; make clean install
+		echo "[ --------------- compiling $tool ]"
+		cd /home/$USER/suckless-sources/$tool 
+		make clean install
+		echo "                       [ DONE ]"
 	done
 
 	# Update .xinitrc
@@ -194,15 +221,36 @@ function suckless_tools_setup() {
 	exec dwm" >> /home/$USER/.xinitrc
 }
 
-while getopts u:xlogin:h option
-do
-	case "${option}"
-		in
-		u) USER=${OPTARG};;
-		xlogin) XLOGIN=${OPTARG};;
-		h) display_help
-	esac
-done
+dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubuntu setup script.\\nIt will guide you through the setup process in order to gather relevant data. It won't take long ;)" 10 60
 
+USER=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
+
+TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 14 70 5 \
+	min "A minimal & focused browser built on Electron" on \
+	lftp "A very powerful command line FTP/FTPS client" on \
+	scim "Versatile vim-like spreadsheet program (CLI)" on \
+	xbacklight "Control screen brightness" on \
+	redshift "Night mode for your screen" on \
+	cups "Utilities for using printers" on \
+	3>&1 1>&2 2>&3 3>&1)
+
+SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
+	--checklist "Select which tools you want to include \\n(by default, the whole Suckless Ubuntu set is selected):" 15 80 10 \
+	 dwm "Fast, lightweight and minimalist tiling window manager" on \
+	 st "Simple terminal (Luke Smith's build)" on \
+	 surf "Minimalist GUI web browser based on WebKit2/GTK+" on \
+	 sent "Create slick presentations using Markdown" on \
+	 slock "A simple screen locker" on \
+	 slstatus "Customizable status bar for dwm" on \
+	 farbfeld "Lossless image format" on \
+	 tabbed "Create tabs for app windows" on \
+	 3>&1 1>&2 2>&3 3>&1)
+
+SU_SCRIPT_ROOT=`pwd`
+dialog --infobox "Options gathered. Moving on..." 3 34 ; sleep 1
+
+dialog --backtitle "System Configuration" --title "Graphical login"  --yesno "Do you want to use a graphical login (using lightdm)?" 10 30
+XLOGIN=$?
 
 configure_system
+
