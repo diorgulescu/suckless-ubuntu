@@ -164,8 +164,6 @@ function setup_gui_login() {
 	echo "#!/bin/sh
 	feh --bg-fill \"/home/$USER/.wallpaper.jpg\"
         slstatus&
-	dmenu&
-	st&
 	exec /usr/local/bin/dwm > /dev/null" >> /usr/local/bin/dwm-start
 
 	echo "[Desktop Entry]
