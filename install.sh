@@ -241,7 +241,7 @@ dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubunt
 
 USER=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
 
-TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 14 70 5 \
+TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 6 \
 	min "A minimal & focused browser built on Electron" on \
 	lftp "A very powerful command line FTP/FTPS client" on \
 	scim "Versatile vim-like spreadsheet program (CLI)" on \
@@ -251,8 +251,9 @@ TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools
 	3>&1 1>&2 2>&3 3>&1)
 
 SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
-	--checklist "Select which tools you want to include \\n(by default, the whole Suckless Ubuntu set is selected):" 15 80 10 \
+	--checklist "Select which tools you want to include \\n(by default, the whole Suckless Ubuntu set is selected):" 17 80 12 \
 	 dwm "Fast, lightweight and minimalist tiling window manager" on \
+	 dmenu "Easy to use keyboard application launcher" on \
 	 st "Simple terminal (Luke Smith's build)" on \
 	 surf "Minimalist GUI web browser based on WebKit2/GTK+" on \
 	 sent "Create slick presentations using Markdown" on \
