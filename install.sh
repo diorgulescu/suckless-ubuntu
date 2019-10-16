@@ -29,24 +29,24 @@ function display_help() {
 }
 
 function load_pkg_list() { # Read the packages defined in pkg-list.csv
-}
 	PKG_LIST=$1
-
+	
 	while IFS=, read -r type name
 	do
 		echo "Got $type - $name"
 		if [ "$type" = "base" ]
 		then
-			$BASE_PKGS+=("$name")
+			BASE_PKGS+=('$name')
 		elif [ "$type" = "lib" ]
 		then
-			$LIB_PKGS+=("$name")
+			LIB_PKGS+=('$name')
 		elif [ "$type" = "tools" ]
 		then
-			$TOOLS_PKGS+=("$name")
+			TOOLS_PKGS+=('$name')
 		fi
 
 	done < $PKG_LIST
+}
 
 function install_min() { # Install the Min browser
 	echo "==> Installing the Min browser..."
@@ -171,7 +171,12 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	for tool in "${TMPTOOLSET[@]}"
 	do
 		echo "[--------------------------------- $tool ]"
-		git clone git://git.suckless.org/$tool
+		if [ "$tool" = "st" ]
+		then
+			git clone https://github.com/LukeSmithxyz/st.git 
+		else
+			git clone git://git.suckless.org/$tool
+		fi
 	done
 	# Using Luke Smith's ST build, since he added nice handy customizations
 	#git clone https://github.com/LukeSmithxyz/st.git
@@ -211,6 +216,7 @@ SU_SCRIPT_ROOT=`pwd`
 # Read the packages from the CSV file
 load_pkg_list $SU_SCRIPT_ROOT/packages/pkg-list.csv
 
+sleep 5
 # A nice, warm welcome
 dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubuntu setup script.\\nIt will guide you through the setup process in order to gather relevant data. It won't take long ;)" 10 60
 
