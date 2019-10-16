@@ -169,6 +169,7 @@ function setup_gui_login() {
 	exec /usr/local/bin/dwm > /dev/null" >> /usr/local/bin/dwm-start
 
 	echo "[Desktop Entry]
+	background = /home/$USER/.wallpaper.jpg
 	Encoding=UTF-8
 	Name=dwm
 	Comment=This session starts dwm
