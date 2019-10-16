@@ -157,6 +157,9 @@ function setup_gui_login() {
 	cp -f configs/gtk/gtk-3.0/settings.ini /home/$USER/.config/gtk-3.0/settings.ini
 	cp -f configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
 
+	echo "Creating XSessions folder and session entry for DWM..."
+	mkdir /usr/share/xsessions
+
 	echo "#!/bin/sh
 	feh --bg-fill /home/$USER/.wallpaper.jpg
         slstatus &
@@ -168,7 +171,9 @@ function setup_gui_login() {
 	Name=dwm
 	Comment=This session starts dwm
     	Exec=/usr/local/bin/dwm-start
-        Type=Application" >> /usr/share/xgreeters/dwm-greeter.desktop
+        Type=Application" >> /usr/share/xsessions/dwm-greeter.desktop
+
+	chmod a+x /usr/local/bin/dwm-start
 
 }
 
