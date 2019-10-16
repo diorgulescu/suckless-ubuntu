@@ -33,7 +33,6 @@ function load_pkg_list() { # Read the packages defined in pkg-list.csv
 	
 	while IFS=, read -r type name
 	do
-		echo "Got $type - $name"
 		if [ "$type" = "base" ]
 		then
 			BASE_PKGS+=('$name')
@@ -49,11 +48,17 @@ function load_pkg_list() { # Read the packages defined in pkg-list.csv
 }
 
 function install_min() { # Install the Min browser
-	echo "==> Installing the Min browser..."
-	wget https://github.com/minbrowser/min/releases/download/v1.11.1/min_1.11.1_amd64.deb
-	dpkg -i min_1.11.1_amd64.deb
-	apt-get install -f -y
-	rm min_1.11.1_amd64.deb
+	if [ "$(`uname -m`)" = "x86_64" ]
+	then
+		echo "==> Installing the Min browser..."
+		wget https://github.com/minbrowser/min/releases/download/v1.11.1/min_1.11.1_amd64.deb
+		dpkg -i min_1.11.1_amd64.deb
+		apt-get install -f -y
+		rm min_1.11.1_amd64.deb
+	else
+		dialog --infobox "Sorry, but the Min browser is only available for 64-bit platforms.\\nMoving on..." 4 80
+		sleep 5
+	fi
 }
 
 function install_additional_tools() { # Install additional tools
@@ -76,10 +81,11 @@ function install_additional_tools() { # Install additional tools
 
 }
 function configure_system() { # The main function, executing the steps in order
-	###### Place the default wallpaper in $HOME directory
+	###### Place the default wallpapers in $HOME directory
 	echo "-------======== [ SUCKLESS UBUNTU SETUP SCRIPT ] ========-------"
-	echo "Copying the default wallpaper..."
-	cp wallpaper.jpg /home/$USER/.wallpaper.jpg
+	echo "Copying the included wallpapers..."
+	mkdir -p /home/$USER/Photos/Wallpapers/
+	cp wallpapers/* /home/$USER/Photos/Wallpapers/
 
 	echo "Updating the available packages list..."
 	apt-get update # To get the latest package lists
@@ -103,6 +109,11 @@ function configure_system() { # The main function, executing the steps in order
   		mkdir /home/$USER/.config
 		mkdir /home/$USER/.config/gtk-3.0
 		setup_gui_login
+	fi
+
+	if [ "$HOURLY_WALL" = "0"]
+	then
+		set_hourly_wallpaper
 	fi
 
 	echo "==> Trying to set user permissions"
@@ -130,14 +141,13 @@ function setup_gui_login() { # Setup LightDM and XSession entries
 
 	echo "Creating XSessions folder and session entry for DWM..."
 	mkdir /usr/share/xsessions
-
 	echo "#!/bin/sh
-	feh --bg-fill \"/home/$USER/.wallpaper.jpg\"
+	feh --bg-fill \"`ls /home/$USER/Photos/Wallpapers/ | shuf -n 1`\"
         slstatus&
 	exec /usr/local/bin/dwm > /dev/null" >> /usr/local/bin/dwm-start
 
 	echo "[Desktop Entry]
-	background = /home/$USER/.wallpaper.jpg
+	background = /home/$USER/Photos/Wallpapers/login.jpg
 	Encoding=UTF-8
 	Name=dwm
 	Comment=This session starts dwm
@@ -146,6 +156,11 @@ function setup_gui_login() { # Setup LightDM and XSession entries
 
 	chmod a+x /usr/local/bin/dwm-start
 
+}
+
+function set_hourly_wallpaper() {
+	echo "#!/bin/bash
+	feh --bg-fill \"`ls /home/dragos/Photos/wallpaper/ | shuf -n 1`\"" >> /etc/cron.hourly/wallpaper
 }
 
 function install_packages() { # Generic function for installing a package
@@ -253,6 +268,11 @@ dialog --infobox "Options gathered. Moving on..." 3 34 ; sleep 1
 # Is graphical system login desired?
 dialog --backtitle "System Configuration" --title "Graphical login"  --yesno "Do you want to use a graphical login (using lightdm)?" 10 30
 XLOGIN=$?
+
+# Does the user want to have a new wallpaper each hour?
+dialog --backtitle "System Configuration" --title "Random hourly wallpaper"  --yesno "Do you want a different desktop wallpaper each hour?" 10 30
+HOURLY_WALL=$?
+
 
 # Start the process & enjoy the ride!
 configure_system
