@@ -35,22 +35,23 @@ function load_pkg_list() { # Read the packages defined in pkg-list.csv
 	do
 		if [ "$type" = "base" ]
 		then
-			BASE_PKGS+=('$name')
+			BASE_PKGS+=($name)
 		elif [ "$type" = "lib" ]
 		then
-			LIB_PKGS+=('$name')
+			LIB_PKGS+=($name)
 		elif [ "$type" = "tools" ]
 		then
-			TOOLS_PKGS+=('$name')
+			TOOLS_PKGS+=($name)
 		fi
 
 	done < $PKG_LIST
 }
 
 function install_min() { # Install the Min browser
-	if [ "$(`uname -m`)" = "x86_64" ]
+	if [ "`uname -m`" = "x86_64" ]
 	then
 		echo "==> Installing the Min browser..."
+		# TODO: Automatically fetch the latest stable package
 		wget https://github.com/minbrowser/min/releases/download/v1.11.1/min_1.11.1_amd64.deb
 		dpkg -i min_1.11.1_amd64.deb
 		apt-get install -f -y
@@ -63,11 +64,12 @@ function install_min() { # Install the Min browser
 
 function install_additional_tools() { # Install additional tools
 	array=("$@")
-
+	
 	IFS=' '
 	read -ra TMPTOOLSET <<< $array
 	for tool in "${TMPTOOLSET[@]}"
 	do
+		echo "DBG: got $tool"
 		if [ "$tool" = "min" ]
 		then
 			install_min
@@ -99,7 +101,7 @@ function configure_system() { # The main function, executing the steps in order
 	echo "==> Installing additional tools..."
 	install_packages "${TOOLS_PKGS[@]}"
 	install_additional_tools "${TOOLS[@]}"
-	
+
 	echo "==> Setting up suckless.org tools..."
 	suckless_tools_setup "${SUCKLESS_TOOLS[@]}"
 
@@ -142,9 +144,9 @@ function setup_gui_login() { # Setup LightDM and XSession entries
 	echo "Creating XSessions folder and session entry for DWM..."
 	mkdir /usr/share/xsessions
 	echo "#!/bin/sh
-	feh --bg-fill \"`ls /home/$USER/Photos/Wallpapers/ | shuf -n 1`\"
+	feh --bg-fill \"/home/$USER/Photos/Wallpapers/`ls /home/$USER/Photos/Wallpapers/ | shuf -n 1`\"
         slstatus&
-	exec /usr/local/bin/dwm > /dev/null" >> /usr/local/bin/dwm-start
+	exec /usr/local/bin/dwm > /dev/null" > /usr/local/bin/dwm-start
 
 	echo "[Desktop Entry]
 	background = /home/$USER/Photos/Wallpapers/login.jpg
@@ -152,7 +154,7 @@ function setup_gui_login() { # Setup LightDM and XSession entries
 	Name=dwm
 	Comment=This session starts dwm
     	Exec=/usr/local/bin/dwm-start
-        Type=Application" >> /usr/share/xsessions/dwm-greeter.desktop
+        Type=Application" > /usr/share/xsessions/dwm-greeter.desktop
 
 	chmod a+x /usr/local/bin/dwm-start
 
@@ -160,7 +162,7 @@ function setup_gui_login() { # Setup LightDM and XSession entries
 
 function set_hourly_wallpaper() {
 	echo "#!/bin/bash
-	feh --bg-fill \"`ls /home/dragos/Photos/wallpaper/ | shuf -n 1`\"" >> /etc/cron.hourly/wallpaper
+	feh --bg-fill \"/home/$USER/Photos/Wallpapers/`ls /home/dragos/Photos/wallpaper/ | shuf -n 1`\"" >> /etc/cron.hourly/wallpaper
 }
 
 function install_packages() { # Generic function for installing a package
@@ -213,7 +215,7 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	done
 
 	# Update .xinitrc
-	echo "feh --bg-fill \"/home/$USER/.wallpaper.jpg\"
+	echo "feh --bg-fill \"/home/$USER/Photos/Wallpapers/login.jpg\"
 	slstatus&
 	exec dwm" >> /home/$USER/.xinitrc
 }
@@ -228,6 +230,8 @@ function cleanup() {
 # Get the absolute path of the current script
 SU_SCRIPT_ROOT=`pwd`
 
+# Make sure dialog is installed
+apt-get install -y dialog
 # Read the packages from the CSV file
 load_pkg_list $SU_SCRIPT_ROOT/packages/pkg-list.csv
 
