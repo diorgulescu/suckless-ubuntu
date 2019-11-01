@@ -6,7 +6,7 @@ This project aims at setting up a minimal Ubuntu installation built around tools
 Current goals:
 * provide a selection of useful software, avoiding apps that may not be relevant for most users (in the end, additional packages can be installed acording to the user's wishes)
 * test support for Bluetooth devices, WiFi and power management, graphics and network drivers, including printers
-* try to see if using sbase and ubase from suckless.org is feasible
+
 
 
 # Requirements
@@ -15,9 +15,6 @@ Current goals:
 * A computer which supports the network drivers that come with the Ubuntu Minimal image (wireless adapters work, too).
 
 # Known issues
-## Min browser fails to install correctly
-It may happen that some of the dependencies are improperly setup using the latest Ubuntu mirrors. In case some error pops up during the Min setup stage, just run *sudo apt-get install -f* and it should be automatically fixed.
-
 ## No 'settings.json' for Min
 This seems more like an edge case, but it was reported. If the browser fails to start, just make sure the appropriate permissions are set for the .config folders. To make sure, one may also create the file:
 *chown $(whoami):$(whoami) -R .config/
@@ -51,7 +48,7 @@ Now type the following in the terminal:
 ```
 cd suckless-ubuntu-master
 sudo chmod +x install.sh
-sudo ./install.sh -u <USERNAME> -xlogin <YES|NO>
+sudo ./install.sh
 ```
 It is very important that you remember to include `sudo`. At some point you will be prompted to type your user password. Do this and hit `ENTER`. When the setup is complete, reboot.
 
