@@ -86,9 +86,10 @@ function configure_system() { # The main function, executing the steps in order
 	###### Place the default wallpapers in $HOME directory
 	echo "-------======== [ SUCKLESS UBUNTU SETUP SCRIPT ] ========-------"
 	echo "Copying the included wallpapers..."
-	mkdir -p /home/$USER/Photos/Wallpapers/
-	cp wallpapers/* /home/$USER/Photos/Wallpapers/
+	mkdir -p /home/$USERNAME/Photos/Wallpapers/
+	cp wallpapers/* /home/$USERNAME/Photos/Wallpapers/
 
+	mkdir -p $REPO_FOLDER
 	echo "Updating the available packages list..."
 	apt-get update # To get the latest package lists
 
@@ -100,6 +101,8 @@ function configure_system() { # The main function, executing the steps in order
 
 	echo "==> Installing additional tools..."
 	install_packages "${TOOLS_PKGS[@]}"
+
+	cd $REPO_FOLDER
 	install_additional_tools "${TOOLS[@]}"
 
 	echo "==> Setting up suckless.org tools..."
@@ -108,8 +111,8 @@ function configure_system() { # The main function, executing the steps in order
 	if [ "$XLOGIN" = "0" ]
 	then
 		###### Make config directories
-  		mkdir /home/$USER/.config
-		mkdir /home/$USER/.config/gtk-3.0
+  		mkdir /home/$USERNAME/.config
+		mkdir /home/$USERNAME/.config/gtk-3.0
 		setup_gui_login
 	fi
 
@@ -119,10 +122,10 @@ function configure_system() { # The main function, executing the steps in order
 	fi
 
 	echo "==> Trying to set user permissions"
-	chown $USER:$USER -R /home/$USER/
-	chmod g+s /home/$USER/
-	setfacl -d -m g::rwx /home/$USER/
-	setfacl -d -m o::rx /home/$USER/
+	chown $USERNAME:$USERNAME -R /home/$USERNAME/
+	chmod g+s /home/$USERNAME/
+	setfacl -d -m g::rwx /home/$USERNAME/
+	setfacl -d -m o::rx /home/$USERNAME/
 
 	# Clean things up
 	cleanup
@@ -138,18 +141,18 @@ function setup_gui_login() { # Setup LightDM and XSession entries
 	
 	cd $SU_SCRIPT_ROOT
 	###### Apply GTK theme, fonts, icon theme, login greeter
-	cp -f configs/gtk/gtk-3.0/settings.ini /home/$USER/.config/gtk-3.0/settings.ini
+	cp -f configs/gtk/gtk-3.0/settings.ini /home/$USERNAME/.config/gtk-3.0/settings.ini
 	cp -f configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
 
 	echo "Creating XSessions folder and session entry for DWM..."
 	mkdir /usr/share/xsessions
 	echo "#!/bin/sh
-	feh --bg-fill \"/home/$USER/Photos/Wallpapers/`ls /home/$USER/Photos/Wallpapers/ | shuf -n 1`\"
+	feh --bg-fill \"/home/$USERNAME/Photos/Wallpapers/`ls /home/$USERNAME/Photos/Wallpapers/ | shuf -n 1`\"
         slstatus&
 	exec /usr/local/bin/dwm > /dev/null" > /usr/local/bin/dwm-start
 
 	echo "[Desktop Entry]
-	background = /home/$USER/Photos/Wallpapers/login.jpg
+	background = /home/$USERNAME/Photos/Wallpapers/login.jpg
 	Encoding=UTF-8
 	Name=dwm
 	Comment=This session starts dwm
@@ -162,7 +165,7 @@ function setup_gui_login() { # Setup LightDM and XSession entries
 
 function set_hourly_wallpaper() {
 	echo "#!/bin/bash
-	feh --bg-fill \"/home/$USER/Photos/Wallpapers/`ls /home/dragos/Photos/wallpaper/ | shuf -n 1`\"" >> /etc/cron.hourly/wallpaper
+	feh --bg-fill \"/home/$USERNAME/Photos/Wallpapers/`ls /home/dragos/Photos/wallpaper/ | shuf -n 1`\"" >> /etc/cron.hourly/wallpaper
 }
 
 function install_packages() { # Generic function for installing a package
@@ -178,11 +181,8 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	tool_array=("$@")
 	dialog --infobox "Will now fetch & build suckless.org tools..." 3 80; sleep 4
 
-	###### Create the folder in which sources from suckless.org will be saved
-	mkdir /home/$USER/suckless-sources
-
 	###### Fetch the latest sources
-	cd /home/$USER/suckless-sources
+	cd $REPO_FOLDER
 	IFS=' '
 	read -ra TMPTOOLSET <<< $tool_array
 	for tool in "${TMPTOOLSET[@]}"
@@ -202,22 +202,22 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	cd $SU_SCRIPT_ROOT
 
 	# Copy dwm & slstatus configs
-	cp -f configs/dwm-config.h /home/$USER/suckless-sources/dwm/config.h
-	cp -f configs/slstatus-config.h /home/$USER/suckless-sources/slstatus/config.h
+	cp -f configs/dwm-config.h $REPO_FOLDER/dwm/config.h
+	cp -f configs/slstatus-config.h $REPO_FOLDER/slstatus/config.h
 
 	##### COMPILE SUCKLESS.ORG SOFTWARE #####
 	for tool in "${TMPTOOLSET[@]}"
 	do
 		echo "[ --------------- compiling $tool ]"
-		cd /home/$USER/suckless-sources/$tool 
+		cd $REPO_FOLDER/$tool 
 		make clean install
 		echo "                       [ DONE ]"
 	done
 
 	# Update .xinitrc
-	echo "feh --bg-fill \"/home/$USER/Photos/Wallpapers/login.jpg\"
+	echo "feh --bg-fill \"/home/$USERNAME/Photos/Wallpapers/login.jpg\"
 	slstatus&
-	exec dwm" >> /home/$USER/.xinitrc
+	exec dwm" >> /home/$USERNAME/.xinitrc
 }
 
 function cleanup() {
@@ -229,6 +229,7 @@ function cleanup() {
 
 # Get the absolute path of the current script
 SU_SCRIPT_ROOT=`pwd`
+REPO_FOLDER=/home/$USERNAME/git
 
 # Make sure dialog is installed
 apt-get install -y dialog
@@ -240,7 +241,7 @@ sleep 5
 dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubuntu setup script.\\nIt will guide you through the setup process in order to gather relevant data. It won't take long ;)" 10 60
 
 # Get the user name
-USER=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
+USERNAME=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
 
 # Get the additional tools that will be installed
 TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 6 \
