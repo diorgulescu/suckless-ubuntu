@@ -1,0 +1,3 @@
+package,description,option
+dwm,Dynamic Window Manager (tiling wm by suckless.org),on
+i3,Friendly & highly customizable tiling window manager,off

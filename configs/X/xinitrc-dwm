@@ -1,0 +1,4 @@
+xrdb -load $HOME/.Xresources
+feh --bg-fill /home/#USERNAME/photos/wallpapers/login.jpg
+slstatus&
+exec dwm

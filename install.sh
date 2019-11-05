@@ -1,5 +1,8 @@
 #!/bin/bash
 
+TIME_FORMAT="[%Y-%m-%d][%H:%I:%S]"
+LOGFILE=subuntu-setup.log
+
 # Declare arrays to hold package lists
 declare -a BASE_PKGS
 declare -a LIB_PKGS
@@ -7,19 +10,57 @@ declare -a TOOLS_PKGS
 
 ### === HELPER FUNCTIONS === ###
 
+function package_selection() {
+	# $1 - CSV input file
+	# $2 - list type ("checklist" or "radiolist")
+	# $3 - window text
+	#TODO: Find a way to dinamically scale the item list
+	input=$1
+	while IFS=',' read -r col1 col2 col3 dummy
+	do
+   		array+=("$col1")
+   		array+=("$col2")
+   		array+=("$col3")
+	done < <(tail -n +2 "$input")
+
+	option=$(dialog --checklist --backtitle "System Configuration" --output-fd 1 "Choose packages:" 14 80 8 "${array[@]}")
+
+	exitstatus=$?
+	if [ $exitstatus = 0 ]; then
+    		return $option
+	else
+    		return 1
+	fi
+
+}
+
+function run() { # Runs a command and deals with the exit code
+    # Code snippet found here: https://stackoverflow.com/questions/372116/what-is-the-best-way-to-write-a-wrapper-function-that-runs-commands-and-logs-thei
+    "$@" > /dev/null 
+    ret=$?
+    if [[ $ret -eq 0 ]]
+    then
+        echo "`date +$TIME_FORMAT`[INFO]Successfully ran [ $@ ]" >> $LOGFILE
+    else
+        echo "`date +$TIME_FORMAT`[ERROR]Command [ $@ ] returned $ret" >> $LOGFILE
+	echo "ERROR!"
+        return $ret
+    fi
+}
+
 function install_scim() { # Build and install sc-im
 	echo "==> Installing sc-im.."
-	git clone https://github.com/jmcnamara/libxlsxwriter.git
+	run git clone $GIT_XLSXWRITER
 	cd libxlsxwriter/
-	make
-	make install
-	ldconfig
+	run make
+	run make install
+	run ldconfig
 	cd ..
 
-	git clone https://github.com/andmarti1424/sc-im.git
+	run git clone $GIT_SCIM
 	cd sc-im/src
-	make
-	make install
+	run make
+	run make install
 	cd ..
 
 }
@@ -69,7 +110,6 @@ function install_additional_tools() { # Install additional tools
 	read -ra TMPTOOLSET <<< $array
 	for tool in "${TMPTOOLSET[@]}"
 	do
-		echo "DBG: got $tool"
 		if [ "$tool" = "min" ]
 		then
 			install_min
@@ -226,9 +266,10 @@ function cleanup() {
 
 # === SCRIPT EXECUTION STARTS HERE ===
 
-# +>> 
+echo "Loading, please wait..."
 # Get the absolute path of the current script
 SU_SCRIPT_ROOT=`pwd`
+
 REPO_FOLDER=/home/$USERNAME/git
 CHOSEN_WM="dwm"
 TERM_EMULATOR=st
@@ -236,7 +277,7 @@ ST_OPTION="default"
 SURF_OPTION="default"
 
 # Make sure dialog is installed
-apt-get install -y dialog
+run_cmd apt-get install -y dialog
 # Read the packages from the CSV file
 load_pkg_list $SU_SCRIPT_ROOT/packages/pkg-list.csv
 
@@ -248,36 +289,39 @@ dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubunt
 USERNAME=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
 
 # Get the additional tools that will be installed
-TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 7 \
-	min "A minimal & focused browser built on Electron" on \
-	lf "Clean & innovative console file manager, written in Go" on \
-	lftp "A very powerful command line FTP/FTPS client" on \
-	scim "Versatile vim-like spreadsheet program (CLI)" on \
-	xbacklight "Control screen brightness" on \
-	redshift "Night mode for your screen" on \
-	cups "Utilities for using printers" on \
-	3>&1 1>&2 2>&3 3>&1)
+#TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 7 \
+#	min "A minimal & focused browser built on Electron" on \
+#	lf "Clean & innovative console file manager, written in Go" on \
+#	lftp "A very powerful command line FTP/FTPS client" on \
+#	scim "Versatile vim-like spreadsheet program (CLI)" on \
+#	xbacklight "Control screen brightness" on \
+#	redshift "Night mode for your screen" on \
+#	cups "Utilities for using printers" on \
+#	3>&1 1>&2 2>&3 3>&1)
+$TOOLS=$(package_selection "./include/tools.csv")
 
-CHOSEN_WM=$(dialog --title "Window Manager" --backtitle "Suckless Ubuntu Setup" --radiolist "What window manager do you want to use?" 16 80 2\
-	dwm "Dynamic Window Manager (tiling wm by suckless.org)" on \
-	i3 "Friendly & highly customizable tiling window manager" off \
-	3>&1 1>&2 2>&3 3>&1)
+#CHOSEN_WM=$(dialog --title "Window Manager" --backtitle "Suckless Ubuntu Setup" --radiolist "What window manager do you want to use?" 16 80 2\
+#	dwm "Dynamic Window Manager (tiling wm by suckless.org)" on \
+#	i3 "Friendly & highly customizable tiling window manager" off \
+#	3>&1 1>&2 2>&3 3>&1)
+$CHOSEN_WM=$(package_selection "./include/wm.csv")
 
 # Get a list of the suckless.org tools that will be installed
-SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
-	--checklist "Select which tools you want to include \\n(by default, the whole Suckless Ubuntu set is selected):" 17 80 12 \
-	 dwm "Fast, lightweight and minimalist tiling window manager" on \
-	 dmenu "Easy to use keyboard application launcher" on \
-	 st "Simple terminal (Luke Smith's build)" on \
-	 surf "Minimalist GUI web browser based on WebKit2/GTK+" on \
-	 sent "Create slick presentations using Markdown" on \
-	 slock "A simple screen locker" on \
-	 slstatus "Customizable status bar for dwm" on \
-	 farbfeld "Lossless image format" on \
-	 tabbed "Create tabs for app windows" on \
-	 3>&1 1>&2 2>&3 3>&1)
+#SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
+#	--checklist "Select which tools you want to include \\n(by default, the whole Suckless Ubuntu set is selected):" 17 80 12 \
+#	 dwm "Fast, lightweight and minimalist tiling window manager" on \
+#	 dmenu "Easy to use keyboard application launcher" on \
+#	 st "Simple terminal (Luke Smith's build)" on \
+#	 surf "Minimalist GUI web browser based on WebKit2/GTK+" on \
+#	 sent "Create slick presentations using Markdown" on \
+#	 slock "A simple screen locker" on \
+#	 slstatus "Customizable status bar for dwm" on \
+#	 farbfeld "Lossless image format" on \
+#	 tabbed "Create tabs for app windows" on \
+#	 3>&1 1>&2 2>&3 3>&1)
 
-https://github.com/imiric/surf.git
+SUCKLESS_TOOLS=$(package_selection "./include/suckless.csv")
+
 # Notify the user
 dialog --infobox "Options gathered. Moving on..." 3 34 ; sleep 1
 

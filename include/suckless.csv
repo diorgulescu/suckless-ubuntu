@@ -1,0 +1,8 @@
+package,description,option
+st,suckless terminal,on
+surf,Minimalist GUI web browser based on WebKit2/GTK+,on
+sent,Create slick presentations using Markdown,on
+slock,A simple screen locker,on
+slstatus,Customizable status bar for dwm,on
+farbfeld,Lossless image format,on
+tabbed,Create tabs for app windows,on

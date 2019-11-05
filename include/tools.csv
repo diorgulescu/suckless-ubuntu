@@ -1,0 +1,8 @@
+package,description,option
+min,A minimal & focused browser built on Electron,on
+lf,Clean & innovative console file manager written in Go,on 
+lftp,A very powerful command line FTP/FTPS client,on
+scim,Versatile vim-like spreadsheet program (CLI),on
+xbacklight,Control screen brightness,on
+redshift,Night mode for your screen,on 
+cups,Utilities for using printers,on 
