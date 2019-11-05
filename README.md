@@ -1,11 +1,12 @@
 Suckless Ubuntu
 ===============
 
-This project aims at setting up a minimal Ubuntu installation built around tools provided by suckless.org, together with other options that will make the operating system functional. The main goal of the project is to achieve an Ubuntu-derived Linux distribution that has the concepts of deep work & focused attention at its core. The project was initially forked from Michael Staal-Olsens' i3buntu repository, but eventually became something different as I switched from using i3 to dwm.
+This project aims at setting up a minimal Ubuntu installation built around tools provided by suckless.org, together with other options that will make the operating system functional. The main goal of the project is to achieve an Ubuntu-derived Linux distribution that has the concepts of deep work & focused attention at its core. The project was initially forked from Michael Staal-Olsens' i3buntu repository, but eventually became something different as I switched from using i3 to dwm. However, i3 was shortly added back as a window manager option, simply because I figured some users would love the look & feel any of these two provide, but find i3 to be more friendly and customizable.
 
 Current goals:
-* provide a selection of useful software, avoiding apps that may not be relevant for most users (in the end, additional packages can be installed acording to the user's wishes)
+* provide a selection of useful software, avoiding apps that may not be relevant for most users (in the end, additional packages can be installed acording to the user's wishes) while also trying to stick to simple & stable tools
 * test support for Bluetooth devices, WiFi and power management, graphics and network drivers, including printers
+* refine and 
 
 
 
@@ -34,9 +35,9 @@ Once the installation finishes, reboot into your new system (console only, for n
 
 Once logged in, download the "install files"
 ```
-wget https://github.com/diorgulescu/suckless-ubuntu/archive/master.tar.gz
+wget https://github.com/suckless-ubuntu/setup-tool/archive/master.tar.gz
 ```
-and hit `ENTER`. This will download the most recent version of Focused Linux from this GitHub account. Now type the following:
+and hit `ENTER`. This will download the most recent version from this GitHub account. Now type the following:
 ```
 tar -xvzf master.tar.gz
 ```
@@ -46,7 +47,7 @@ and hit `ENTER`. This will extract the installation package.
 
 Now type the following in the terminal:
 ```
-cd suckless-ubuntu-master
+cd setup-tool-master
 sudo chmod +x install.sh
 sudo ./install.sh
 ```

@@ -84,34 +84,33 @@ function install_additional_tools() { # Install additional tools
 }
 function configure_system() { # The main function, executing the steps in order
 	###### Place the default wallpapers in $HOME directory
-	echo "-------======== [ SUCKLESS UBUNTU SETUP SCRIPT ] ========-------"
-	echo "Copying the included wallpapers..."
-	mkdir -p /home/$USERNAME/Photos/Wallpapers/
-	cp wallpapers/* /home/$USERNAME/Photos/Wallpapers/
+	msg "Configuring system" "Copying the included wallpapers..." "3 40"
+	mkdir -pv /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
+	cp -v wallpapers/* /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
 
-	mkdir -p $REPO_FOLDER
-	echo "Updating the available packages list..."
-	apt-get update # To get the latest package lists
+	mkdir -pv $REPO_FOLDER &>> $LOGFILE
+	msg "Configuring system" "Updating the available packages list..." "3 40"
+	apt-get update >> $LOGFILE
 
-	echo "==> Installing base packages..."
+	msg "Configuring system" "Installing base packages..." "3 40"; sleep 2
 	install_packages "${BASE_PKGS[@]}"
 
-	echo "==> Installing libraries..."
+	msg "Configuring system" "Installing libraries..." "3 40"; sleep 2
 	install_packages "${LIB_PKGS[@]}"
 
-	echo "==> Installing additional tools..."
+	msg "Configuring system" "Installing additional tools..." "3 40"; sleep 2
 	install_packages "${TOOLS_PKGS[@]}"
 
 	cd $REPO_FOLDER
 	install_additional_tools "${TOOLS[@]}"
 
-	echo "==> Setting up suckless.org tools..."
+	msg "Configuring system" "Setting up suckless.org tools..." "3 50"; sleep 2
 	suckless_tools_setup "${SUCKLESS_TOOLS[@]}"
 
 	if [ "$XLOGIN" = "0" ]
 	then
 		###### Make config directories
-  		mkdir /home/$USERNAME/.config
+  		mkdir -v /home/$USERNAME/.config &>> $LOGFILE 
 		mkdir /home/$USERNAME/.config/gtk-3.0
 		setup_gui_login
 	fi
@@ -172,8 +171,8 @@ function install_packages() { # Generic function for installing a package
         array=("$@")
 	for pkg in "${array[@]}"
 	do
-		echo "===>>>Now installing $pkg and its dependencies. Please wait..." 
-		apt-get install -y $pkg
+		dialog --backtitle "Software Setup" --infobox "Installing $pkg..." 3 40
+		apt-get install -y $pkg &> $LOGFILE
 	done
 }
 
@@ -227,9 +226,14 @@ function cleanup() {
 
 # === SCRIPT EXECUTION STARTS HERE ===
 
+# +>> 
 # Get the absolute path of the current script
 SU_SCRIPT_ROOT=`pwd`
 REPO_FOLDER=/home/$USERNAME/git
+CHOSEN_WM="dwm"
+TERM_EMULATOR=st
+ST_OPTION="default"
+SURF_OPTION="default"
 
 # Make sure dialog is installed
 apt-get install -y dialog
@@ -238,19 +242,25 @@ load_pkg_list $SU_SCRIPT_ROOT/packages/pkg-list.csv
 
 sleep 5
 # A nice, warm welcome
-dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubuntu setup script.\\nIt will guide you through the setup process in order to gather relevant data. It won't take long ;)" 10 60
+dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubuntu setup tool.\\nIt will guide you through the setup process in order to gather relevant data. It won't take long ;)" 10 60
 
 # Get the user name
 USERNAME=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
 
 # Get the additional tools that will be installed
-TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 6 \
+TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 7 \
 	min "A minimal & focused browser built on Electron" on \
+	lf "Clean & innovative console file manager, written in Go" on \
 	lftp "A very powerful command line FTP/FTPS client" on \
 	scim "Versatile vim-like spreadsheet program (CLI)" on \
 	xbacklight "Control screen brightness" on \
 	redshift "Night mode for your screen" on \
 	cups "Utilities for using printers" on \
+	3>&1 1>&2 2>&3 3>&1)
+
+CHOSEN_WM=$(dialog --title "Window Manager" --backtitle "Suckless Ubuntu Setup" --radiolist "What window manager do you want to use?" 16 80 2\
+	dwm "Dynamic Window Manager (tiling wm by suckless.org)" on \
+	i3 "Friendly & highly customizable tiling window manager" off \
 	3>&1 1>&2 2>&3 3>&1)
 
 # Get a list of the suckless.org tools that will be installed
@@ -267,6 +277,7 @@ SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
 	 tabbed "Create tabs for app windows" on \
 	 3>&1 1>&2 2>&3 3>&1)
 
+https://github.com/imiric/surf.git
 # Notify the user
 dialog --infobox "Options gathered. Moving on..." 3 34 ; sleep 1
 
