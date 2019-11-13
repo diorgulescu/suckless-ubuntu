@@ -10,11 +10,13 @@ declare -a TOOLS_PKGS
 
 ### === HELPER FUNCTIONS === ###
 
-function package_selection() {
+function package_selection() { # !! NOT IN USE (YET)
 	# $1 - CSV input file
 	# $2 - list type ("checklist" or "radiolist")
 	# $3 - window text
-	#TODO: Find a way to dinamically scale the item list
+	#TODO: Figure out how to properly use dialog within a function
+	#TODO2: Find a way to dinamically scale the item list
+
 	input=$1
 	while IFS=',' read -r col1 col2 col3 dummy
 	do
@@ -34,8 +36,9 @@ function package_selection() {
 
 }
 
-function run() { # Runs a command and deals with the exit code
-    # Code snippet found here: https://stackoverflow.com/questions/372116/what-is-the-best-way-to-write-a-wrapper-function-that-runs-commands-and-logs-thei
+function run_cmd() { # Runs a command and deals with the exit code
+    # Code snippet found here: 
+    # https://stackoverflow.com/questions/372116/what-is-the-best-way-to-write-a-wrapper-function-that-runs-commands-and-logs-thei
     "$@" > /dev/null 
     ret=$?
     if [[ $ret -eq 0 ]]
@@ -49,18 +52,20 @@ function run() { # Runs a command and deals with the exit code
 }
 
 function install_scim() { # Build and install sc-im
-	echo "==> Installing sc-im.."
-	run git clone $GIT_XLSXWRITER
-	cd libxlsxwriter/
-	run make
-	run make install
-	run ldconfig
+	dialog --title "Setup" --infobox "Installing sc-im.." 3 40; sleep 2
+	dialog --title "sc-im setup" --infobox "==> Setting up libxlsxwriter..." 3 40
+	run_cmd git clone $GIT_XLSXWRITER &>> $LOGFILE
+	cd libxlsxwriter/ &>>$LOGFILE
+	run_cmd make &>> $LOGFILE
+	run_cmd make install &>> $LOGFILE
+	run_cmd ldconfig &>> $LOGFILE
 	cd ..
 
-	run git clone $GIT_SCIM
+	dialog --title "sc-im setup" --infobox "==> Setting up sc-im..." 3 40
+	run_cmd git clone $GIT_SCIM &>> $LOGFILE
 	cd sc-im/src
-	run make
-	run make install
+	run_cmd make &>> $LOGFILE
+	run_cmd make install &>> $LOGFILE
 	cd ..
 
 }
@@ -91,12 +96,13 @@ function load_pkg_list() { # Read the packages defined in pkg-list.csv
 function install_min() { # Install the Min browser
 	if [ "`uname -m`" = "x86_64" ]
 	then
-		echo "==> Installing the Min browser..."
+		dialog --title "Setup" --infobox "Installing the Min browser..." 3 40
 		# TODO: Automatically fetch the latest stable package
-		wget https://github.com/minbrowser/min/releases/download/v1.11.1/min_1.11.1_amd64.deb
-		dpkg -i min_1.11.1_amd64.deb
-		apt-get install -f -y
-		rm min_1.11.1_amd64.deb
+		wget https://github.com/minbrowser/min/releases/download/v1.11.1/min_1.11.1_amd64.deb &>> $LOGFILE
+		dpkg -i min_1.11.1_amd64.deb &>> $LOGFILE
+		dialog --title "Setup" --infobox "Adding dependencies required by the Min browser..." 3 60
+		apt-get install -f -y &>> $LOGFILE
+		rm min_1.11.1_amd64.deb 
 	else
 		dialog --infobox "Sorry, but the Min browser is only available for 64-bit platforms.\\nMoving on..." 4 80
 		sleep 5
@@ -117,50 +123,53 @@ function install_additional_tools() { # Install additional tools
 		then
 			install_scim
 		else
-			apt-get install -y $tool
+			dialog --title "Setup" --infobox "Installing $tool..." 3 50
+			apt-get install -y $tool &>> $LOGFILE
 		fi
 	done
 
 }
 function configure_system() { # The main function, executing the steps in order
 	###### Place the default wallpapers in $HOME directory
-	msg "Configuring system" "Copying the included wallpapers..." "3 40"
+	dialog --title "Configuring system" --infobox "Copying the included wallpapers..." 3 40
 	mkdir -pv /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
 	cp -v wallpapers/* /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
 
 	mkdir -pv $REPO_FOLDER &>> $LOGFILE
-	msg "Configuring system" "Updating the available packages list..." "3 40"
+	dialog --title "Configuring system" --infobox "Updating the available packages list..." 3 50
 	apt-get update >> $LOGFILE
 
-	msg "Configuring system" "Installing base packages..." "3 40"; sleep 2
+	dialog --title "Configuring system" --infobox "Installing base packages..." 3 40; sleep 2
 	install_packages "${BASE_PKGS[@]}"
 
-	msg "Configuring system" "Installing libraries..." "3 40"; sleep 2
+	dialog --title "Configuring system" --infobox "Installing libraries..." 3 40; sleep 2
 	install_packages "${LIB_PKGS[@]}"
 
-	msg "Configuring system" "Installing additional tools..." "3 40"; sleep 2
+	dialog --title  "Configuring system" --infobox "Installing additional tools..." 3 40; sleep 2
 	install_packages "${TOOLS_PKGS[@]}"
 
 	cd $REPO_FOLDER
 	install_additional_tools "${TOOLS[@]}"
 
-	msg "Configuring system" "Setting up suckless.org tools..." "3 50"; sleep 2
+	dialog --title "Configuring system" --infobox "Setting up suckless.org tools..." "3 50"; sleep 2
 	suckless_tools_setup "${SUCKLESS_TOOLS[@]}"
 
 	if [ "$XLOGIN" = "0" ]
 	then
+		dialog --title "GUI login" --infobox "Setting up graphical login..." "3 50"
 		###### Make config directories
   		mkdir -v /home/$USERNAME/.config &>> $LOGFILE 
-		mkdir /home/$USERNAME/.config/gtk-3.0
+		mkdir -v /home/$USERNAME/.config/gtk-3.0 &>> $LOGFILE
 		setup_gui_login
 	fi
 
 	if [ "$HOURLY_WALL" = "0"]
 	then
+		dialog --title "Misc" --infobox "Setting up hourly wallpapers..." "3 50"
 		set_hourly_wallpaper
 	fi
 
-	echo "==> Trying to set user permissions"
+	dialog --title "Wrapping up" --infobox "Setting user permissions..." 3 40
 	chown $USERNAME:$USERNAME -R /home/$USERNAME/
 	chmod g+s /home/$USERNAME/
 	setfacl -d -m g::rwx /home/$USERNAME/
@@ -174,16 +183,17 @@ function configure_system() { # The main function, executing the steps in order
 }
 
 function setup_gui_login() { # Setup LightDM and XSession entries
-	apt-get install -y lightdm
-        apt-get install -y lightdm-gtk-greeter 
-	apt-get install -y lightdm-gtk-greeter-settings
+	dialog --title "Setup" --infobox "Installing lightdm and its dependencies..." 3 60
+	apt-get install -y lightdm &>> $LOGFILE
+        apt-get install -y lightdm-gtk-greeter &>> $LOGFILE
+	apt-get install -y lightdm-gtk-greeter-settings &>> $LOGFILE
 	
+	dialog --title "Setup" --infobox "Configuring lightdm, XSession and desktop entries..." 3 80
 	cd $SU_SCRIPT_ROOT
 	###### Apply GTK theme, fonts, icon theme, login greeter
 	cp -f configs/gtk/gtk-3.0/settings.ini /home/$USERNAME/.config/gtk-3.0/settings.ini
 	cp -f configs/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf
 
-	echo "Creating XSessions folder and session entry for DWM..."
 	mkdir /usr/share/xsessions
 	echo "#!/bin/sh
 	feh --bg-fill \"/home/$USERNAME/Photos/Wallpapers/`ls /home/$USERNAME/Photos/Wallpapers/ | shuf -n 1`\"
@@ -211,14 +221,14 @@ function install_packages() { # Generic function for installing a package
         array=("$@")
 	for pkg in "${array[@]}"
 	do
-		dialog --backtitle "Software Setup" --infobox "Installing $pkg..." 3 40
+		dialog --backtitle "Software Setup" --infobox "Installing $pkg..." 3 60
 		apt-get install -y $pkg &> $LOGFILE
 	done
 }
 
 function suckless_tools_setup() { # Fetch, build & install suckless tools
 	tool_array=("$@")
-	dialog --infobox "Will now fetch & build suckless.org tools..." 3 80; sleep 4
+	dialog --infobox "Will now fetch & build suckless.org tools..." 3 80; sleep 2
 
 	###### Fetch the latest sources
 	cd $REPO_FOLDER
@@ -226,16 +236,14 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	read -ra TMPTOOLSET <<< $tool_array
 	for tool in "${TMPTOOLSET[@]}"
 	do
-		echo "[--------------------------------- $tool ]"
+		dialog --title "Suckless tools" --infobox "Getting sources for $tool..." 3 60
 		if [ "$tool" = "st" ]
 		then
-			git clone https://github.com/LukeSmithxyz/st.git 
+			git clone https://github.com/LukeSmithxyz/st.git &>> $LOGFILE
 		else
-			git clone git://git.suckless.org/$tool
+			git clone git://git.suckless.org/$tool &>> $LOGFILE
 		fi
 	done
-	# Using Luke Smith's ST build, since he added nice handy customizations
-	#git clone https://github.com/LukeSmithxyz/st.git
 
 	# Go back to the setup script folder
 	cd $SU_SCRIPT_ROOT
@@ -247,10 +255,9 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	##### COMPILE SUCKLESS.ORG SOFTWARE #####
 	for tool in "${TMPTOOLSET[@]}"
 	do
-		echo "[ --------------- compiling $tool ]"
+		dialog --title "Suckless tools" --infobox "Compiling $tool..." 3 60
 		cd $REPO_FOLDER/$tool 
-		make clean install
-		echo "                       [ DONE ]"
+		make clean install &>> $LOGFILE
 	done
 
 	# Update .xinitrc
@@ -260,6 +267,7 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 }
 
 function cleanup() {
+	dialog --title "Wrapping up" --infobox "Cleaning up..." 3 60
 	rm -rf $SU_SCRIPT_ROOT/sc-im
 	rm -rf $SU_SCRIPT_ROOT/libxlsxwriter
 }
@@ -289,36 +297,30 @@ dialog --title "Welcome!" --msgbox "Hey, there! \\n\\nThis is the Suckless Ubunt
 USERNAME=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
 
 # Get the additional tools that will be installed
-#TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 7 \
-#	min "A minimal & focused browser built on Electron" on \
-#	lf "Clean & innovative console file manager, written in Go" on \
-#	lftp "A very powerful command line FTP/FTPS client" on \
-#	scim "Versatile vim-like spreadsheet program (CLI)" on \
-#	xbacklight "Control screen brightness" on \
-#	redshift "Night mode for your screen" on \
-#	cups "Utilities for using printers" on \
-#	3>&1 1>&2 2>&3 3>&1)
-$TOOLS=$(package_selection "./include/tools.csv")
-
-#CHOSEN_WM=$(dialog --title "Window Manager" --backtitle "Suckless Ubuntu Setup" --radiolist "What window manager do you want to use?" 16 80 2\
-#	dwm "Dynamic Window Manager (tiling wm by suckless.org)" on \
-#	i3 "Friendly & highly customizable tiling window manager" off \
-#	3>&1 1>&2 2>&3 3>&1)
-$CHOSEN_WM=$(package_selection "./include/wm.csv")
+TOOLS=$(dialog --backtitle "Suckless Ubuntu Setup" --checklist "Additional tools:" 16 70 7 \
+	min "A minimal & focused browser built on Electron" on \
+	lf "Clean & innovative console file manager, written in Go" on \
+	lftp "A very powerful command line FTP/FTPS client" on \
+	scim "Versatile vim-like spreadsheet program (CLI)" on \
+	xbacklight "Control screen brightness" on \
+	redshift "Night mode for your screen" on \
+	cups "Utilities for using printers" on \
+	3>&1 1>&2 2>&3 3>&1)
+#$TOOLS=$(package_selection "./include/tools.csv")
 
 # Get a list of the suckless.org tools that will be installed
-#SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
-#	--checklist "Select which tools you want to include \\n(by default, the whole Suckless Ubuntu set is selected):" 17 80 12 \
-#	 dwm "Fast, lightweight and minimalist tiling window manager" on \
-#	 dmenu "Easy to use keyboard application launcher" on \
-#	 st "Simple terminal (Luke Smith's build)" on \
-#	 surf "Minimalist GUI web browser based on WebKit2/GTK+" on \
-#	 sent "Create slick presentations using Markdown" on \
-#	 slock "A simple screen locker" on \
-#	 slstatus "Customizable status bar for dwm" on \
-#	 farbfeld "Lossless image format" on \
-#	 tabbed "Create tabs for app windows" on \
-#	 3>&1 1>&2 2>&3 3>&1)
+SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
+	--checklist "Select which tools you want to include \\n(by default, the whole Suckless Ubuntu set is selected):" 17 80 12 \
+	 dwm "Fast, lightweight and minimalist tiling window manager" on \
+	 dmenu "Easy to use keyboard application launcher" on \
+	 st "Simple terminal (Luke Smith's build)" on \
+	 surf "Minimalist GUI web browser based on WebKit2/GTK+" on \
+	 sent "Create slick presentations using Markdown" on \
+	 slock "A simple screen locker" on \
+	 slstatus "Customizable status bar for dwm" on \
+	 farbfeld "Lossless image format" on \
+	 tabbed "Create tabs for app windows" on \
+	 3>&1 1>&2 2>&3 3>&1)
 
 SUCKLESS_TOOLS=$(package_selection "./include/suckless.csv")
 
