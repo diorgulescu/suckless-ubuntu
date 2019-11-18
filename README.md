@@ -35,7 +35,7 @@ Once the installation finishes, reboot into your new system (console only, for n
 
 Once logged in, download the "install files"
 ```
-wget https://github.com/suckless-ubuntu/setup-tool/archive/master.tar.gz
+wget https://github.com/diorgulescu/suckless-ubuntu/archive/master.tar.gz
 ```
 and hit `ENTER`. This will download the most recent version from this GitHub account. Now type the following:
 ```
@@ -47,7 +47,7 @@ and hit `ENTER`. This will extract the installation package.
 
 Now type the following in the terminal:
 ```
-cd setup-tool-master
+cd suckless-ubuntu-master
 sudo chmod +x install.sh
 sudo ./install.sh
 ```
