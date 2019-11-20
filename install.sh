@@ -137,7 +137,6 @@ function configure_system() { # The main function, executing the steps in order
 	mkdir -pv /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
 	cp -v wallpapers/* /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
 
-	echo $REPO_FOLDER; mkdir -pv $REPO_FOLDER; sleep 4
 	dialog --title "Configuring system" --infobox "Updating the available packages list..." 3 50
 	apt-get update >> $LOGFILE
 
@@ -249,8 +248,8 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	cd $SU_SCRIPT_ROOT
 
 	# Copy dwm & slstatus configs
-	cp -f configs/dwm-config.h $REPO_FOLDER/dwm/config.h
-	cp -f configs/slstatus-config.h $REPO_FOLDER/slstatus/config.h
+	cp -f configs/suckless/dwm-config.h $REPO_FOLDER/dwm/config.h
+	cp -f configs/suckless/slstatus-config.h $REPO_FOLDER/slstatus/config.h
 
 	##### COMPILE SUCKLESS.ORG SOFTWARE #####
 	for tool in "${TMPTOOLSET[@]}"
