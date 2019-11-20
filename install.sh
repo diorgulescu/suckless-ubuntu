@@ -1,7 +1,9 @@
 #!/bin/bash
 
 TIME_FORMAT="[%Y-%m-%d][%H:%I:%S]"
-LOGFILE=subuntu-setup.log
+#LOGFILE=subuntu-setup.log
+
+source './include/repos.sh'
 
 # Declare arrays to hold package lists
 declare -a BASE_PKGS
@@ -53,20 +55,20 @@ function run_cmd() { # Runs a command and deals with the exit code
 
 function install_scim() { # Build and install sc-im
 	dialog --title "Setup" --infobox "Installing sc-im.." 3 40; sleep 2
+	cd $SU_SCRIPT_ROOT/$REPO_FOLDER
 	dialog --title "sc-im setup" --infobox "==> Setting up libxlsxwriter..." 3 40
 	run_cmd git clone $GIT_XLSXWRITER &>> $LOGFILE
 	cd libxlsxwriter/ &>>$LOGFILE
 	run_cmd make &>> $LOGFILE
 	run_cmd make install &>> $LOGFILE
 	run_cmd ldconfig &>> $LOGFILE
-	cd ..
 
 	dialog --title "sc-im setup" --infobox "==> Setting up sc-im..." 3 40
+	cd $SU_SCRIPT_ROOT/$REPO_FOLDER
 	run_cmd git clone $GIT_SCIM &>> $LOGFILE
 	cd sc-im/src
 	run_cmd make &>> $LOGFILE
 	run_cmd make install &>> $LOGFILE
-	cd ..
 
 }
 
@@ -135,7 +137,7 @@ function configure_system() { # The main function, executing the steps in order
 	mkdir -pv /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
 	cp -v wallpapers/* /home/$USERNAME/Photos/Wallpapers/ &>> $LOGFILE
 
-	mkdir -pv $REPO_FOLDER &>> $LOGFILE
+	echo $REPO_FOLDER; mkdir -pv $REPO_FOLDER; sleep 4
 	dialog --title "Configuring system" --infobox "Updating the available packages list..." 3 50
 	apt-get update >> $LOGFILE
 
@@ -148,10 +150,8 @@ function configure_system() { # The main function, executing the steps in order
 	dialog --title  "Configuring system" --infobox "Installing additional tools..." 3 40; sleep 2
 	install_packages "${TOOLS_PKGS[@]}"
 
-	cd $REPO_FOLDER
 	install_additional_tools "${TOOLS[@]}"
 
-	dialog --title "Configuring system" --infobox "Setting up suckless.org tools..." "3 50"; sleep 2
 	suckless_tools_setup "${SUCKLESS_TOOLS[@]}"
 
 	if [ "$XLOGIN" = "0" ]
@@ -231,7 +231,7 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	dialog --infobox "Will now fetch & build suckless.org tools..." 3 80; sleep 2
 
 	###### Fetch the latest sources
-	cd $REPO_FOLDER
+	cd $SU_SCRIPT_ROOT/$REPO_FOLDER
 	IFS=' '
 	read -ra TMPTOOLSET <<< $tool_array
 	for tool in "${TMPTOOLSET[@]}"
@@ -239,9 +239,9 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 		dialog --title "Suckless tools" --infobox "Getting sources for $tool..." 3 60
 		if [ "$tool" = "st" ]
 		then
-			git clone https://github.com/LukeSmithxyz/st.git &>> $LOGFILE
+			git clone $GIT_LUKE_ST &>> $LOGFILE
 		else
-			git clone git://git.suckless.org/$tool &>> $LOGFILE
+			git clone $GIT_SUCKLESS/$tool &>> $LOGFILE
 		fi
 	done
 
@@ -256,7 +256,7 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 	for tool in "${TMPTOOLSET[@]}"
 	do
 		dialog --title "Suckless tools" --infobox "Compiling $tool..." 3 60
-		cd $REPO_FOLDER/$tool 
+		cd $SU_SCRIPT_ROOT/$REPO_FOLDER/$tool 
 		make clean install &>> $LOGFILE
 	done
 
@@ -267,9 +267,8 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 }
 
 function cleanup() {
-	dialog --title "Wrapping up" --infobox "Cleaning up..." 3 60
-	rm -rf $SU_SCRIPT_ROOT/sc-im
-	rm -rf $SU_SCRIPT_ROOT/libxlsxwriter
+	dialog --title "Wrapping up" --infobox "Cleaning up..." 3 60; sleep 2
+	#rm -rf $SU_SCRIPT_ROOT/$REPO_FOLDER
 }
 
 # === SCRIPT EXECUTION STARTS HERE ===
@@ -278,12 +277,12 @@ echo "Loading, please wait..."
 # Get the absolute path of the current script
 SU_SCRIPT_ROOT=`pwd`
 
-REPO_FOLDER=/home/$USERNAME/git
+REPO_FOLDER=git
 CHOSEN_WM="dwm"
 TERM_EMULATOR=st
 ST_OPTION="default"
 SURF_OPTION="default"
-
+LOGFILE=$SU_SCRIPT_ROOT/suckless-ubuntu-setup.log
 # Make sure dialog is installed
 run_cmd apt-get install -y dialog
 # Read the packages from the CSV file
@@ -322,7 +321,6 @@ SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
 	 tabbed "Create tabs for app windows" on \
 	 3>&1 1>&2 2>&3 3>&1)
 
-SUCKLESS_TOOLS=$(package_selection "./include/suckless.csv")
 
 # Notify the user
 dialog --infobox "Options gathered. Moving on..." 3 34 ; sleep 1
