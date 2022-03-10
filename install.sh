@@ -267,7 +267,7 @@ function suckless_tools_setup() { # Fetch, build & install suckless tools
 
 function cleanup() {
 	dialog --title "Wrapping up" --infobox "Cleaning up..." 3 60; sleep 2
-	#rm -rf $SU_SCRIPT_ROOT/$REPO_FOLDER
+	rm -rf $SU_SCRIPT_ROOT/$REPO_FOLDER
 }
 
 # === SCRIPT EXECUTION STARTS HERE ===
@@ -276,7 +276,10 @@ echo "Loading, please wait..."
 # Get the absolute path of the current script
 SU_SCRIPT_ROOT=`pwd`
 
+# Temporary source file storage
 REPO_FOLDER=git
+mkdir $SU_SCRIPT_ROOT/$REPO_FOLDER
+
 CHOSEN_WM="dwm"
 TERM_EMULATOR=st
 ST_OPTION="default"
