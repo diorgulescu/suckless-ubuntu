@@ -48,3 +48,6 @@ lib,libzip-dev
 lib,libzip4
 tools,git
 tools,feh
+tools,neofetch
+tools,mc
+tools,htop
