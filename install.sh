@@ -33,9 +33,21 @@ function package_selection() { # !! NOT IN USE (YET)
 	if [ $exitstatus = 0 ]; then
     		return $option
 	else
-    		return 1
+    		user_quit
 	fi
 
+}
+
+function user_quit() { # Invoked when 'Cancel' is selected by the user
+    dialog --backtitle "System Configuration" --title "Quit?" --yesno "Do you wish to cancel and quit setup?" 10 30
+    QUIT=$?
+    if [ $QUIT != 0 ]; then
+        # Call cleanup
+	cleanup
+	
+	# Graceful exit
+	exit 0
+    fi
 }
 
 function run_cmd() { # Runs a command and deals with the exit code
@@ -323,6 +335,10 @@ SUCKLESS_TOOLS=$(dialog --backtitle "suckless.org tools selection" \
 	 tabbed "Create tabs for app windows" on \
 	 3>&1 1>&2 2>&3 3>&1)
 
+exitstatus=$?
+if [ $exitstatus != 0 ]; then
+    user_quit
+fi
 
 # Notify the user
 dialog --infobox "Options gathered. Moving on..." 3 34 ; sleep 1
