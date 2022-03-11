@@ -2,9 +2,6 @@
 TIME_FORMAT="[%Y-%m-%d][%H:%I:%S]"
 LOGFILE=subuntu-setup.log
 
-# Paths
-REPO_FOLDER=/opt/suckless-ubuntu/git
-
 # Message strings
 MSG_GREETING_TITLE="Welcome!"
 MSG_GREETING="Hey, there! \\n\\nThis is the Suckless Ubuntu setup tool.\\nIt will guide you through the setup process in order to gather relevant data. It won't take long ;)"
